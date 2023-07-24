@@ -83,154 +83,163 @@ st.markdown(
 
 if __name__ == "__main__":
     # st.sidebar.title("Sidebar")
-    st.sidebar.subheader("FPL")
+    # st.sidebar.subheader("FPL")
     # Add sidebar inputs option = st.sidebar.radio("Select an option", ["Overview", "Your team vs current champion",
     # "Your team vs any team "])
-    option = st.sidebar.radio("", ["Squad selection"])
+    # option = st.sidebar.radio("", ["Squad selection"])
+    #
+    # if option == "Squad selection":
+    stats_df = pd.read_csv("FPLData/all_payer_per_gw_data.csv")
+    stats_df["full_name"] = stats_df["first_name"] + " " + stats_df["second_name"]
 
-    if option == "Squad selection":
-        stats_df = pd.read_csv("FPLData/all_payer_per_gw_data.csv")
-        stats_df["full_name"] = stats_df["first_name"] + " " + stats_df["second_name"]
+    fw_df = stats_df[stats_df["singular_name"] == "Forward"]
+    mid_df = stats_df[stats_df["singular_name"] == "Midfielder"]
+    dif_df = stats_df[stats_df["singular_name"] == "Defender"]
+    gk_df = stats_df[stats_df["singular_name"] == "Goalkeeper"]
 
-        fw_df = stats_df[stats_df["singular_name"] == "Forward"]
-        mid_df = stats_df[stats_df["singular_name"] == "Midfielder"]
-        dif_df = stats_df[stats_df["singular_name"] == "Defender"]
-        gk_df = stats_df[stats_df["singular_name"] == "Goalkeeper"]
+    # with st.expander("Player performance: position break-down"):
+    #
+    #     col1, col2 = st.columns(2)
+    #     with col1:
+    #         st.write("Goalkeepers")
+    #         st.dataframe(gk_df.groupby('full_name')['total_points'].sum().sort_values(ascending=False).rename(
+    #             'total_points_scored').reset_index())
+    #     with col2:
+    #         st.write("Defenders")
+    #         st.dataframe(dif_df.groupby('full_name')['total_points'].sum().sort_values(ascending=False).rename(
+    #             'total_points_scored').reset_index())
+    #
+    #     col1, col2 = st.columns(2)
+    #
+    #     with col1:
+    #         st.write("Midfielders")
+    #         st.dataframe(mid_df.groupby('full_name')['total_points'].sum().sort_values(ascending=False).rename(
+    #             'total_points_scored').reset_index())
+    #     with col2:
+    #         st.write("Forwards")
+    #         st.dataframe(fw_df.groupby('full_name')['total_points'].sum().sort_values(ascending=False).rename(
+    #             'total_points_scored').reset_index())
 
-        # with st.expander("Player performance: position break-down"):
-        #
-        #     col1, col2 = st.columns(2)
-        #     with col1:
-        #         st.write("Goalkeepers")
-        #         st.dataframe(gk_df.groupby('full_name')['total_points'].sum().sort_values(ascending=False).rename(
-        #             'total_points_scored').reset_index())
-        #     with col2:
-        #         st.write("Defenders")
-        #         st.dataframe(dif_df.groupby('full_name')['total_points'].sum().sort_values(ascending=False).rename(
-        #             'total_points_scored').reset_index())
-        #
-        #     col1, col2 = st.columns(2)
-        #
-        #     with col1:
-        #         st.write("Midfielders")
-        #         st.dataframe(mid_df.groupby('full_name')['total_points'].sum().sort_values(ascending=False).rename(
-        #             'total_points_scored').reset_index())
-        #     with col2:
-        #         st.write("Forwards")
-        #         st.dataframe(fw_df.groupby('full_name')['total_points'].sum().sort_values(ascending=False).rename(
-        #             'total_points_scored').reset_index())
+    # selected_player = st.selectbox("select player from the list", stats_df['full_name'].unique().tolist())
 
-        # selected_player = st.selectbox("select player from the list", stats_df['full_name'].unique().tolist())
+    st.subheader("Fantasy Premier League squad selection")
+    st.write("---")
+    st.write(
+        "Set budgets for each position and an optimization algorithm will select the best squad that fits your "
+        "allocated budgets "
+    )
+    st.markdown("- Algorithm creates and optimizes a custom metric that combines all underlying player stats from last "
+                "season")
+    st.markdown("- Metric takes into account the fixture difficulty - uses the average fixture difficulty of the first "
+                "5 gwks ")
+    st.markdown("- Player ownership (selected_by_percent) shown is updated in realtime as data is pulled life using "
+                "FPL API")
+    st.markdown("- Down below select two more players and campare their form - form guide is caculated using rolling "
+                "average of window 5 (gwks)")
+    st.write("---")
 
-        st.subheader("Fantasy Premier League squad selection")
-        st.write("---")
+    fpl_players_data = prepare_player_data()
+    fpl_players_data["rating"] = fpl_players_data.apply(calculate_player_rating, axis=1)
+    # fpl_players_data = fpl_players_data[fpl_players_data["chance_of_playing_next_round"].isna()]
+    # st.write(fpl_players_data.head(1).T)
+
+    col1, col2, col3, col4 = st.columns(4)
+
+    # Add input fields in each column
+    with col1:
+        fwds = st.text_input("Forwards budget", value=26)
+    with col2:
+        mids = st.text_input("Midfielders budget", value=39)
+
+    with col3:
+        defs = st.text_input("Defenders budget", value=27)
+
+    with col4:
+        gks = st.text_input("Goalkeepers budget", value=9)
+
+    col1, col2 = st.columns(2)
+    with col1:
+        include = st.multiselect(
+            "If you need to explicitly include player(s) in squad selection, choose from the list ",
+            fpl_players_data["web_name"].unique().tolist(),
+            default=["Haaland"],
+        )
+    with col2:
+        exclude = st.multiselect(
+            "If you need to explicitly exclude player(s) in squad selection, choose from the list ",
+            fpl_players_data["web_name"].unique().tolist(),
+            default="Toney",
+        )
+    st.write("---")
+
+    if float(fwds) + float(mids) + float(defs) + float(gks) > 100:
         st.write(
-            "Set budgets for each position and an optimization algorithm will select the best squad that fits your "
-            "allocated budgets "
+            f"Your total budget of **{float(fwds) + float(mids) + float(defs) + float(gks)}** is above the allocated **100** for squad selection"
         )
 
-        fpl_players_data = prepare_player_data()
-        fpl_players_data["rating"] = fpl_players_data.apply(calculate_player_rating, axis=1)
-        # fpl_players_data = fpl_players_data[fpl_players_data["chance_of_playing_next_round"].isna()]
-        # st.write(fpl_players_data.head(1).T)
+    include_df = fpl_players_data[fpl_players_data["web_name"].isin(include)]
+    exclude_df = fpl_players_data[fpl_players_data["web_name"].isin(exclude)]
 
-        col1, col2, col3, col4 = st.columns(4)
+    gk_list_include, def_list_include, mid_list_include, fwd_list_include = [
+        include_df[include_df["pos"] == pos]["web_name"].tolist()
+        for pos in ["Goalkeeper", "Defender", "Midfielder", "Forward"]
+    ]
+    gk_list_exclude, def_list_exclude, mid_list_exclude, fwd_list_exclude = [
+        exclude_df[exclude_df["pos"] == pos]["web_name"].tolist()
+        for pos in ["Goalkeeper", "Defender", "Midfielder", "Forward"]
+    ]
 
-        # Add input fields in each column
-        with col1:
-            fwds = st.text_input("Forwards budget", value=26)
-        with col2:
-            mids = st.text_input("Midfielders budget", value=39)
+    selected_fwds_df = squad_selection_forwards(
+        df=fpl_players_data,
+        total_cost=float(fwds),
+        include_players=fwd_list_include,
+        exclude_players=fwd_list_exclude,
+    )
+    selected_mids_df = squad_selection_midfield(
+        df=fpl_players_data,
+        total_cost=float(mids),
+        include_players=mid_list_include,
+        exclude_players=mid_list_exclude,
+    )
+    selected_defs_df = squad_selection_defence(
+        df=fpl_players_data,
+        total_cost=float(defs),
+        include_players=def_list_include,
+        exclude_players=def_list_exclude,
+    )
+    selected_gks_df = squad_selection_gk(
+        df=fpl_players_data, total_cost=float(gks), include_players=gk_list_include, exclude_players=gk_list_exclude
+    )
 
-        with col3:
-            defs = st.text_input("Defenders budget", value=27)
+    squad_df = pd.concat([selected_gks_df, selected_defs_df, selected_mids_df, selected_fwds_df], ignore_index=True)
+    st.write("Selected_squad")
+    st.dataframe(squad_df.sort_values('pos'))
+    st.write("Total cost of selected squad using allocated budgets :", squad_df["start_cost"].sum())
+    st.write(f"Cost break down of selected squad per pos:")
+    st.dataframe(squad_df.groupby("pos")["start_cost"].sum().rename("total_cost").reset_index())
 
-        with col4:
-            gks = st.text_input("Goalkeepers budget", value=9)
 
-        col1, col2 = st.columns(2)
-        with col1:
-            include = st.multiselect(
-                "If you need to explicitly include player(s) in squad selection, choose from the list ",
-                fpl_players_data["web_name"].unique().tolist(),
-                default=["Haaland"],
-            )
-        with col2:
-            exclude = st.multiselect(
-                "If you need to explicitly exclude player(s) in squad selection, choose from the list ",
-                fpl_players_data["web_name"].unique().tolist(),
-                default="Toney",
-            )
-        st.write("---")
+    st.write("---")
+    # st.write("Select squad without setting specific budgets for each pos")
+    # if st.button('Click here to select squad!'):
+    #     # Code to be executed when the button is clicked
+    #     s,pts, p = squad_selected_df = select_squad(df=fpl_players_data)
+    #     # st.write(f'Total cost of squad selected {squad_selected_df["start_cost"].sum()}')
+    #     st.dataframe(p)
 
-        if float(fwds) + float(mids) + float(defs) + float(gks) > 100:
-            st.write(
-                f"Your total budget of **{float(fwds) + float(mids) + float(defs) + float(gks)}** is above the allocated **100** for squad selection"
-            )
-
-        include_df = fpl_players_data[fpl_players_data["web_name"].isin(include)]
-        exclude_df = fpl_players_data[fpl_players_data["web_name"].isin(exclude)]
-
-        gk_list_include, def_list_include, mid_list_include, fwd_list_include = [
-            include_df[include_df["pos"] == pos]["web_name"].tolist()
-            for pos in ["Goalkeeper", "Defender", "Midfielder", "Forward"]
-        ]
-        gk_list_exclude, def_list_exclude, mid_list_exclude, fwd_list_exclude = [
-            exclude_df[exclude_df["pos"] == pos]["web_name"].tolist()
-            for pos in ["Goalkeeper", "Defender", "Midfielder", "Forward"]
-        ]
-
-        selected_fwds_df = squad_selection_forwards(
-            df=fpl_players_data,
-            total_cost=float(fwds),
-            include_players=fwd_list_include,
-            exclude_players=fwd_list_exclude,
-        )
-        selected_mids_df = squad_selection_midfield(
-            df=fpl_players_data,
-            total_cost=float(mids),
-            include_players=mid_list_include,
-            exclude_players=mid_list_exclude,
-        )
-        selected_defs_df = squad_selection_defence(
-            df=fpl_players_data,
-            total_cost=float(defs),
-            include_players=def_list_include,
-            exclude_players=def_list_exclude,
-        )
-        selected_gks_df = squad_selection_gk(
-            df=fpl_players_data, total_cost=float(gks), include_players=gk_list_include, exclude_players=gk_list_exclude
+    st.text("Form guide: compare form guide of two more players ")
+    st.write("Form guide is calculated using moving average of window 5 gwks")
+    selected_players = st.multiselect(
+        "Select players to compare from the list",
+        stats_df["full_name"].unique().tolist(),
+        default=["Erling " "Haaland", "Harry Kane"],
+    )
+    if len(selected_players):
+        st.plotly_chart(
+            player_form_guide(stats_df[stats_df["full_name"].isin(selected_players)]), use_container_width=True
         )
 
-        squad_df = pd.concat([selected_gks_df, selected_defs_df, selected_mids_df, selected_fwds_df], ignore_index=True)
-        st.write("Selected_squad")
-        st.dataframe(squad_df.sort_values('pos'))
-        st.write("Total cost of selected squad using allocated budgets :", squad_df["start_cost"].sum())
-        st.write(f"Cost break down of selected squad per pos:")
-        st.dataframe(squad_df.groupby("pos")["start_cost"].sum().rename("total_cost").reset_index())
-
-
-        st.write("---")
-        # st.write("Select squad without setting specific budgets for each pos")
-        # if st.button('Click here to select squad!'):
-        #     # Code to be executed when the button is clicked
-        #     s,pts, p = squad_selected_df = select_squad(df=fpl_players_data)
-        #     # st.write(f'Total cost of squad selected {squad_selected_df["start_cost"].sum()}')
-        #     st.dataframe(p)
-
-        st.text("Form guide: compare form guide of two more players ")
-        st.write("Form guide is calculated using moving average of window 5 gwks")
-        selected_players = st.multiselect(
-            "Select players to compare from the list",
-            stats_df["full_name"].unique().tolist(),
-            default=["Erling " "Haaland", "Harry Kane"],
-        )
-        if len(selected_players):
-            st.plotly_chart(
-                player_form_guide(stats_df[stats_df["full_name"].isin(selected_players)]), use_container_width=True
-            )
-
-        st.write("---")
+    st.write("---")
 
         # st.text("Bonus: players with biggest total bonus points over the season - position break-down")
 
