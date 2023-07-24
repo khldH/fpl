@@ -136,6 +136,7 @@ if __name__ == "__main__":
                 "FPL API")
     st.markdown("- Down below select two or more players and campare their form - form guide is caculated using rolling "
                 "average of window 5 (gwks)")
+    st.write("Limitations: new players that have joined the league are not included in squad selection since there's no data available for them ")
     st.write("---")
 
     fpl_players_data = prepare_player_data()
