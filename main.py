@@ -123,13 +123,14 @@ if __name__ == "__main__":
         # selected_player = st.selectbox("select player from the list", stats_df['full_name'].unique().tolist())
 
         st.subheader("Squad selection")
+        st.write("---")
         st.write(
             "Set budgets for each position and an optimization algo will select the best squad that fits your allocated budgets"
         )
 
         fpl_players_data = prepare_player_data()
         fpl_players_data["rating"] = fpl_players_data.apply(calculate_player_rating, axis=1)
-        fpl_players_data = fpl_players_data[fpl_players_data["chance_of_playing_next_round"].isna()]
+        # fpl_players_data = fpl_players_data[fpl_players_data["chance_of_playing_next_round"].isna()]
         # st.write(fpl_players_data.head(1).T)
 
         col1, col2, col3, col4 = st.columns(4)
@@ -155,8 +156,9 @@ if __name__ == "__main__":
         with col2:
             exclude = st.multiselect(
                 "If you need to explicitly exclude player(s) in squad selection, choose from the list ",
-                fpl_players_data["web_name"].unique().tolist(),
+                fpl_players_data["web_name"].unique().tolist(), default= 'Toney'
             )
+        st.write("---")
 
         # if float(fwds) + float(mids) + float(defs) + float(gks) > 100: st.write( f"Your total budget of _{float(
         # fwds) + float(mids) + float(defs) + float(gks) }_ is above the allocated **100** for squad selection" ) else:
@@ -196,7 +198,7 @@ if __name__ == "__main__":
         )
 
         squad_df = pd.concat([selected_gks_df, selected_defs_df, selected_mids_df, selected_fwds_df], ignore_index=True)
-        st.write("Total cost of selected squad", squad_df["start_cost"].sum())
+        st.write(f"Total cost of selected squad: {squad_df['start_cost'].sum()}, make sure not to exceed the allocated budget of 100")
         st.write(f"Cost break down of selected squad per pos:")
         st.dataframe(squad_df.groupby("pos")["start_cost"].sum().rename("total_cost").reset_index())
         st.dataframe(squad_df)
@@ -212,7 +214,9 @@ if __name__ == "__main__":
         st.text("Form guide: compare form guide of two more players ")
         st.write("Form guide is calculated using moving average of window 5 gwks")
         selected_players = st.multiselect(
-            "Select players to compare from the list", stats_df["full_name"].unique().tolist()
+            "Select players to compare from the list", stats_df["full_name"].unique().tolist(), default =['Erling '
+                                                                                                          'Haaland',
+                                                                                                          'Harry Kane']
         )
         if len(selected_players):
             st.plotly_chart(
