@@ -134,7 +134,7 @@ if __name__ == "__main__":
                 "5 gwks ")
     st.markdown("- Player ownership (selected_by_percent) shown is updated in realtime as data is pulled life using "
                 "FPL API")
-    st.markdown("- Down below select two more players and campare their form - form guide is caculated using rolling "
+    st.markdown("- Down below select two or more players and campare their form - form guide is caculated using rolling "
                 "average of window 5 (gwks)")
     st.write("---")
 
