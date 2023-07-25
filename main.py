@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import time
 
 pd.set_option("display.max_rows", None)
 
@@ -81,6 +82,13 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+
+def long_running_process():
+    # Simulate a long-running process
+    for i in range(4):
+        time.sleep(1)
+
+
 if __name__ == "__main__":
     # st.sidebar.title("Sidebar")
     # st.sidebar.subheader("FPL")
@@ -134,9 +142,11 @@ if __name__ == "__main__":
                 "5 gwks ")
     st.markdown("- Player ownership (selected_by_percent) shown is updated in realtime as data is pulled life using "
                 "FPL API")
-    st.markdown("- Down below select two or more players and campare their form - form guide is caculated using rolling "
+    st.markdown("- Down below select two or more players and campare their form - form guide is caculated using "
+                "rolling "
                 "average of window 5 (gwks)")
-    st.write("Limitations: new players that have joined the league are not included in squad selection since there's no data available for them ")
+    st.write("Limitations: new players that have joined the league are not included in squad selection since there's "
+             "no data available for them ")
     st.write("---")
 
     fpl_players_data = prepare_player_data()
@@ -211,14 +221,18 @@ if __name__ == "__main__":
     selected_gks_df = squad_selection_gk(
         df=fpl_players_data, total_cost=float(gks), include_players=gk_list_include, exclude_players=gk_list_exclude
     )
+    with st.spinner("Squad selection in progess..."):
+        long_running_process()
 
-    squad_df = pd.concat([selected_gks_df, selected_defs_df, selected_mids_df, selected_fwds_df], ignore_index=True)
-    st.write("Selected_squad")
-    st.dataframe(squad_df.sort_values('pos'))
-    st.write("Total cost of selected squad using allocated budgets :", squad_df["start_cost"].sum())
-    st.write(f"Cost break down of selected squad per pos:")
-    st.dataframe(squad_df.groupby("pos")["start_cost"].sum().rename("total_cost").reset_index())
+        # After the long process is done, remove the spinner and show the result
+        st.success("Squad selection complete!")
 
+        squad_df = pd.concat([selected_gks_df, selected_defs_df, selected_mids_df, selected_fwds_df], ignore_index=True)
+        st.write("Selected_squad")
+        st.dataframe(squad_df.sort_values('pos'))
+        st.write("Total cost of selected squad using allocated budgets :", squad_df["start_cost"].sum())
+        st.write(f"Cost break down of selected squad per pos:")
+        st.dataframe(squad_df.groupby("pos")["start_cost"].sum().rename("total_cost").reset_index())
 
     st.write("---")
     # st.write("Select squad without setting specific budgets for each pos")
@@ -242,7 +256,7 @@ if __name__ == "__main__":
 
     st.write("---")
 
-        # st.text("Bonus: players with biggest total bonus points over the season - position break-down")
+    # st.text("Bonus: players with biggest total bonus points over the season - position break-down")
 
     #
     # if option == "Overview":
