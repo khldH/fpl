@@ -136,17 +136,26 @@ if __name__ == "__main__":
         "Set budgets for each position and an optimization algorithm will select the best squad that fits your "
         "allocated budgets "
     )
-    st.markdown("- Algorithm creates and optimizes a custom metric that combines all underlying player stats from last "
-                "season")
-    st.markdown("- Metric takes into account the fixture difficulty - uses the average fixture difficulty of the first "
-                "5 gwks ")
-    st.markdown("- Player ownership (selected_by_percent) shown is updated in realtime as data is pulled life using "
-                "FPL API")
-    st.markdown("- Down below select two or more players and campare their form - form guide is caculated using "
-                "rolling "
-                "average of window 5 (gwks)")
-    st.write("Limitations: new players that have joined the league are not included in squad selection since there's "
-             "no data available for them ")
+    st.markdown(
+        "- Algorithm creates and optimizes a custom metric that combines all underlying player stats from last "
+        "season"
+    )
+    st.markdown(
+        "- Metric takes into account the fixture difficulty - uses the average fixture difficulty of the first "
+        "5 gwks "
+    )
+    st.markdown(
+        "- Player ownership (selected_by_percent) shown is updated in realtime as data is pulled life using " "FPL API"
+    )
+    st.markdown(
+        "- Down below select two or more players and campare their form - form guide is caculated using "
+        "rolling "
+        "average of window 5 (gwks)"
+    )
+    st.write(
+        "Limitations: new players that have joined the league are not included in squad selection since there's "
+        "no data available for them "
+    )
     st.write("---")
 
     fpl_players_data = prepare_player_data()
@@ -229,7 +238,7 @@ if __name__ == "__main__":
 
         squad_df = pd.concat([selected_gks_df, selected_defs_df, selected_mids_df, selected_fwds_df], ignore_index=True)
         st.write("Selected_squad")
-        st.dataframe(squad_df.sort_values('pos'))
+        st.dataframe(squad_df.sort_values("pos"))
         st.write("Total cost of selected squad using allocated budgets :", squad_df["start_cost"].sum())
         st.write(f"Cost break down of selected squad per pos:")
         st.dataframe(squad_df.groupby("pos")["start_cost"].sum().rename("total_cost").reset_index())

@@ -206,7 +206,7 @@ def merge_data(players_fpl_stats, player_picks_data):
     return final_df
 
 
-@st.cache_data
+# @st.cache_data
 def prepare_player_data():
     main_url = "https://fantasy.premierleague.com/api/bootstrap-static/"
     response = requests.get(main_url)
