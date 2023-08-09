@@ -159,14 +159,22 @@ if __name__ == "__main__":
     # Add input fields in each column
     with col1:
         fwds = st.text_input("Forwards budget", value=26)
+        if len(fwds) == 0:
+            fwds = 13.5
     with col2:
         mids = st.text_input("Midfielders budget", value=39)
+        if len(mids) == 0:
+            mids = 22.5
 
     with col3:
         defs = st.text_input("Defenders budget", value=27)
+        if len(defs) == 0:
+            defs = 20.0
 
     with col4:
         gks = st.text_input("Goalkeepers budget", value=9)
+        if len(gks) == 0:
+            gks = 8.0
 
     col1, col2 = st.columns(2)
     with col1:
@@ -221,18 +229,22 @@ if __name__ == "__main__":
     selected_gks_df = squad_selection_gk(
         df=fpl_players_data, total_cost=float(gks), include_players=gk_list_include, exclude_players=gk_list_exclude
     )
-    with st.spinner("Squad selection in progess..."):
-        long_running_process()
+    try:
+        with st.spinner("Squad selection in progess..."):
+            long_running_process()
 
-        # After the long process is done, remove the spinner and show the result
-        st.success("Squad selection complete!")
+            # After the long process is done, remove the spinner and show the result
+            st.success("Squad selection complete!")
 
-        squad_df = pd.concat([selected_gks_df, selected_defs_df, selected_mids_df, selected_fwds_df], ignore_index=True)
-        st.write("Selected_squad")
-        st.dataframe(squad_df.sort_values('pos'))
-        st.write("Total cost of selected squad using allocated budgets :", squad_df["start_cost"].sum())
-        st.write(f"Cost break down of selected squad per pos:")
-        st.dataframe(squad_df.groupby("pos")["start_cost"].sum().rename("total_cost").reset_index())
+            squad_df = pd.concat([selected_gks_df, selected_defs_df, selected_mids_df, selected_fwds_df], ignore_index=True)
+            st.write("Selected_squad")
+            st.dataframe(squad_df.sort_values('pos'))
+            st.write("Total cost of selected squad using allocated budgets :", squad_df["start_cost"].sum())
+            st.write(f"Cost break down of selected squad per pos:")
+            st.dataframe(squad_df.groupby("pos")["start_cost"].sum().rename("total_cost").reset_index())
+    except Exception as e:
+        print(e)
+        st.write("an an expected error occurre...check your allocated budgets are within range")
 
     st.write("---")
     # st.write("Select squad without setting specific budgets for each pos")
