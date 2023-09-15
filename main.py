@@ -1,35 +1,27 @@
+import time
+
 import numpy as np
 import pandas as pd
-import time
 
 pd.set_option("display.max_rows", None)
 
 import plotly.graph_objects as go
 import streamlit as st
-from data import (
-    aggregate_total_points_for_dwg,
-    get_all_gw_picks_data_of_a_manager,
-    get_all_players_per_gw_data,
-    get_data,
-    merge_data,
-    prepare_player_data,
-    read_in_all_players_gw_data,
-)
-from plotting import (
-    player_form_guide,
-    plot_captain_points,
-    plot_cumulative_points,
-    plot_points_per_event,
-    plot_season_points,
-)
-from squad_selection.optimiztion import (
-    calculate_player_rating,
-    select_squad,
-    squad_selection_defence,
-    squad_selection_forwards,
-    squad_selection_gk,
-    squad_selection_midfield,
-)
+
+from data import (aggregate_total_points_for_dwg,
+                  get_all_gw_picks_data_of_a_manager,
+                  get_all_players_per_gw_data, get_data, merge_data,
+                  prepare_player_data, read_in_all_players_gw_data)
+from plotting import (player_form_guide, plot_captain_points,
+                      plot_cumulative_points, plot_points_per_event,
+                      plot_season_points, plot_tranfer_perf_per_gw)
+from squad_management.squad_analysis import (
+    calculate_transfer_points_difference, get_transfers_between_gwks, get_similar_players, find_best_player)
+from squad_selection.optimiztion import (calculate_player_rating, select_squad,
+                                         squad_selection_defence,
+                                         squad_selection_forwards,
+                                         squad_selection_gk,
+                                         squad_selection_midfield)
 
 st.set_option("deprecation.showPyplotGlobalUse", False)
 
@@ -136,17 +128,26 @@ if __name__ == "__main__":
         "Set budgets for each position and an optimization algorithm will select the best squad that fits your "
         "allocated budgets "
     )
-    st.markdown("- Algorithm creates and optimizes a custom metric that combines all underlying player stats from last "
-                "season")
-    st.markdown("- Metric takes into account the fixture difficulty - uses the average fixture difficulty of the first "
-                "5 gwks ")
-    st.markdown("- Player ownership (selected_by_percent) shown is updated in realtime as data is pulled life using "
-                "FPL API")
-    st.markdown("- Down below select two or more players and campare their form - form guide is caculated using "
-                "rolling "
-                "average of window 5 (gwks)")
-    st.write("Limitations: new players that have joined the league are not included in squad selection since there's "
-             "no data available for them ")
+    st.markdown(
+        "- Algorithm creates and optimizes a custom metric that combines all underlying player stats from last "
+        "season"
+    )
+    st.markdown(
+        "- Metric takes into account the fixture difficulty - uses the average fixture difficulty of the first "
+        "5 gwks "
+    )
+    st.markdown(
+        "- Player ownership (selected_by_percent) shown is updated in realtime as data is pulled life using " "FPL API"
+    )
+    st.markdown(
+        "- Down below select two or more players and campare their form - form guide is caculated using "
+        "rolling "
+        "average of window 5 (gwks)"
+    )
+    st.write(
+        "Limitations: new players that have joined the league are not included in squad selection since there's "
+        "no data available for them "
+    )
     st.write("---")
 
     fpl_players_data = prepare_player_data()
@@ -236,9 +237,11 @@ if __name__ == "__main__":
             # After the long process is done, remove the spinner and show the result
             st.success("Squad selection complete!")
 
-            squad_df = pd.concat([selected_gks_df, selected_defs_df, selected_mids_df, selected_fwds_df], ignore_index=True)
+            squad_df = pd.concat(
+                [selected_gks_df, selected_defs_df, selected_mids_df, selected_fwds_df], ignore_index=True
+            )
             st.write("Selected_squad")
-            st.dataframe(squad_df.sort_values('pos'))
+            st.dataframe(squad_df.sort_values("pos"))
             st.write("Total cost of selected squad using allocated budgets :", squad_df["start_cost"].sum())
             st.write(f"Cost break down of selected squad per pos:")
             st.dataframe(squad_df.groupby("pos")["start_cost"].sum().rename("total_cost").reset_index())
@@ -254,17 +257,17 @@ if __name__ == "__main__":
     #     # st.write(f'Total cost of squad selected {squad_selected_df["start_cost"].sum()}')
     #     st.dataframe(p)
 
-    st.text("Form guide: compare form guide of two more players ")
-    st.write("Form guide is calculated using moving average of window 5 gwks")
-    selected_players = st.multiselect(
-        "Select players to compare from the list",
-        stats_df["full_name"].unique().tolist(),
-        default=["Erling " "Haaland", "Harry Kane"],
-    )
-    if len(selected_players):
-        st.plotly_chart(
-            player_form_guide(stats_df[stats_df["full_name"].isin(selected_players)]), use_container_width=True
-        )
+    # st.text("Form guide: compare form guide of two more players ")
+    # st.write("Form guide is calculated using moving average of window 5 gwks")
+    # selected_players = st.multiselect(
+    #     "Select players to compare from the list",
+    #     stats_df["full_name"].unique().tolist(),
+    #     default=["Erling " "Haaland", "Harry Kane"],
+    # )
+    # if len(selected_players):
+    #     st.plotly_chart(
+    #         player_form_guide(stats_df[stats_df["full_name"].isin(selected_players)]), use_container_width=True
+    #     )
 
     st.write("---")
 
@@ -272,123 +275,147 @@ if __name__ == "__main__":
 
     #
     # if option == "Overview":
-    #
-    #
-    #     fpl_manager_id = st.text_input(
-    #         "Enter your team id:",
-    #         max_chars=20,
-    #         key="input",
-    #         help="Get your team id from the URL when you check your gameweek points on the FPL website.",
-    #     )
-    #     if fpl_manager_id:
-    #         url = f"https://fantasy.premierleague.com/api/entry/{fpl_manager_id}/history/"
-    #
-    #         fpl_manager_gw_data = get_data(url)
-    #         # Get all players' data
-    #         players_fpl_stats = read_in_all_players_gw_data()  # get_all_players_per_gw_data()
-    #         # Get gameweek picks data for a specific player
-    #         player_picks_data = get_all_gw_picks_data_of_a_manager(fpl_manager_id)
-    #
-    #         final_df = merge_data(players_fpl_stats=players_fpl_stats, player_picks_data=player_picks_data)
-    #         final_df = aggregate_total_points_for_dwg(final_df)
-    #
-    #         if len(fpl_manager_gw_data):
-    #             col1, col2 = st.columns(2)
-    #             with col1:
-    #                 st.subheader("Overview")
-    #                 total_points = fpl_manager_gw_data["current"][37]["total_points"]
-    #                 overall_rank = np.round((fpl_manager_gw_data["current"][37]["overall_rank"] / 11447257) * 100, 2)
-    #                 total_transfers = pd.DataFrame(fpl_manager_gw_data["current"])["event_transfers"].sum()
-    #                 total_points_on_bench = pd.DataFrame(fpl_manager_gw_data["current"])["points_on_bench"].sum()
-    #                 total_transfer_cost = pd.DataFrame(fpl_manager_gw_data["current"])["event_transfers_cost"].sum()
-    #                 avg_points_per_gw = np.round(total_points / 38, 2)
-    #
-    #                 card_container = ""
-    #                 card_container += create_card(total_points, "Total points")
-    #                 card_container += create_card(avg_points_per_gw, "Average points per gw")
-    #                 card_container += create_card(overall_rank, "Overall rank %")
-    #                 card_container += create_card(
-    #                     total_points_on_bench, "Total points on bench", background_color="yellow", text_color="black"
-    #                 )
-    #                 card_container += create_card(total_transfers, "Total transfers")
-    #                 card_container += create_card(total_transfer_cost, "Total transfers cost", background_color="red")
-    #
-    #                 st.markdown(
-    #                     f"""
-    #                     <div class="card-container">
-    #                         {card_container}
-    #
-    #                     """,
-    #                     unsafe_allow_html=True,
-    #                 )
-    #             with col2:
-    #                 st.empty()
-    #                 st.plotly_chart(plot_season_points(fpl_history=fpl_manager_gw_data))
-    #             st.write("---")
-    #             # col1, col2 = st.columns(2)
-    #             # with col1:
-    #             st.plotly_chart(plot_points_per_event(fpl_history=fpl_manager_gw_data))
-    #             # with col2:
-    #             st.plotly_chart(plot_cumulative_points(fpl_history=fpl_manager_gw_data))
-    #             st.write("---")
-    #             st.subheader("Player selection")
-    #             st.write(f"You have used a total of {final_df['element'].nunique()} players through the season")
-    #             col1, col2 = st.columns(2)
-    #             with col1:
-    #                 # with st.expander("points breakdown per player"):
-    #                     final_df["full_name"] = final_df["first_name"] + " " + final_df["second_name"]
-    #                     player_break_down_df = (
-    #                         final_df.groupby("full_name")["total_points"]
-    #                         .sum()
-    #                         .rename("Total Points")
-    #                         .rename_axis("Name")
-    #                         .astype(int)
-    #                         .reset_index()
-    #                         .sort_values(by="Total Points", ascending=True)
-    #                     )
-    #                     fig = go.Figure(go.Bar(
-    #                         x=player_break_down_df['Total Points'],
-    #                         y=player_break_down_df['Name'],
-    #                         orientation='h'
-    #                     ))
-    #
-    #                     # Set the title and axis labels
-    #                     fig.update_layout(
-    #                         title='Points breakdown per player',
-    #                         xaxis_title='Total Points',
-    #                         yaxis_title='Name',
-    #                         height=1250,  # Set the height of the chart
-    #                         width=650  # Set the width of the chart
-    #                     )
-    #                     st.plotly_chart(fig)
-    #             with col2:
-    #                 # with st.expander("points breakdown per postion"):
-    #                     pos_df = (
-    #                         final_df.groupby("singular_name")["total_points"]
-    #                         .sum()
-    #                         .rename("Total Points")
-    #                         .astype(int)
-    #                         .rename_axis("Position")
-    #                         .reset_index()
-    #                         .sort_values(by="Total Points", ascending=True)
-    #                     )
-    #                     # pos_df = pos_df.rename_axis('Position')
-    #                     fig = go.Figure(go.Bar(
-    #                         x=pos_df['Total Points'],
-    #                         y=pos_df['Position'],
-    #                         orientation='h'
-    #                     ))
-    #
-    #                     # Set the title and axis labels
-    #                     fig.update_layout(
-    #                         title='Points breakdown per position',
-    #                         xaxis_title='Total Points',
-    #                         yaxis_title='Position'
-    #                     )
-    #                     st.plotly_chart(fig)
-    #                     # st.table(pos_df)
-    #
-    #             st.subheader("Performance of captain picks")
-    #             st.plotly_chart(plot_captain_points(final_df))
-    #     else:
-    #         st.write("enter the id of the team you want to anlayze")
+
+    fpl_manager_id = st.text_input(
+        "Enter your team id:",
+        max_chars=20,
+        key="input",
+        help="Get your team id from the URL when you check your gameweek points on the FPL website.",
+    )
+    if fpl_manager_id:
+        url = f"https://fantasy.premierleague.com/api/entry/{fpl_manager_id}/history/"
+
+        fpl_manager_gw_data = get_data(url)
+        # Get all players' data
+        players_fpl_stats = get_all_players_per_gw_data()
+        # Get gameweek picks data for a specific player
+        player_picks_data = get_all_gw_picks_data_of_a_manager(fpl_manager_id)
+
+        final_df = merge_data(players_fpl_stats=players_fpl_stats, player_picks_data=player_picks_data)
+        final_df = aggregate_total_points_for_dwg(final_df)
+
+        if len(fpl_manager_gw_data):
+            col1, col2 = st.columns(2)
+            with col1:
+                st.subheader("Overview")
+                total_points = fpl_manager_gw_data["current"][-1]["total_points"]
+                overall_rank = np.round((fpl_manager_gw_data["current"][-1]["overall_rank"] / 9822586) * 100, 2)
+                total_transfers = pd.DataFrame(fpl_manager_gw_data["current"])["event_transfers"].sum()
+                total_points_on_bench = pd.DataFrame(fpl_manager_gw_data["current"])["points_on_bench"].sum()
+                total_transfer_cost = pd.DataFrame(fpl_manager_gw_data["current"])["event_transfers_cost"].sum()
+                avg_points_per_gw = np.round(total_points / len(fpl_manager_gw_data["current"]), 2)
+
+                card_container = ""
+                card_container += create_card(total_points, "Total points")
+                card_container += create_card(avg_points_per_gw, "Average points per gw")
+                card_container += create_card(overall_rank, "Overall rank %")
+                card_container += create_card(
+                    total_points_on_bench, "Total points on bench", background_color="yellow", text_color="black"
+                )
+                card_container += create_card(total_transfers, "Total transfers")
+                card_container += create_card(total_transfer_cost, "Total transfers cost", background_color="red")
+
+                st.markdown(
+                    f"""
+                    <div class="card-container">
+                        {card_container}
+
+                    """,
+                    unsafe_allow_html=True,
+                )
+            with col2:
+                changes = get_transfers_between_gwks(final_df)
+                diff_points_by_gw = calculate_transfer_points_difference(changes)
+                st.plotly_chart(plot_tranfer_perf_per_gw(diff_points_by_gw))
+                st.write(changes)
+                # st.write(diff_points_by_gw)
+                # st.empty()
+                # st.plotly_chart(plot_season_points(fpl_history=fpl_manager_gw_data))
+            st.write("---")
+            st.subheader("Transfers")
+
+            col1, col2 = st.columns(2)
+            with col1:
+                st.write("Get up to 5 players with similar performance but cheaper than a reference player")
+                reference_player = st.text_input("Player name as it appears in your fantasy app/web", value='Salah')
+                similar = get_similar_players(df=fpl_players_data, reference_player=reference_player)
+                st.write("---")
+                st.write(f"Players with similar performance as ***{reference_player}*** but cheaper")
+                st.dataframe(similar)
+            with col2:
+                st.write("Get suggestions for a transfer")
+                name = st.text_input("Player name as it appears in your fantasy app/web", value='Botman')
+                money_in_bank = st.text_input("Money in your bank", value=0.0)
+                transfer_in_suggested = find_best_player(df=fpl_players_data, web_name=name,
+                                                         money_in_the_bank=float(money_in_bank))
+                st.write("---")
+                st.write(f"Best transfer to replace ***{name}***")
+                st.dataframe(transfer_in_suggested)
+
+            # with col1:
+            # st.plotly_chart(plot_points_per_event(fpl_history=fpl_manager_gw_data))
+            # # with col2:
+            # st.plotly_chart(plot_cumulative_points(fpl_history=fpl_manager_gw_data))
+            # st.write("---")
+            # st.subheader("Player selection")
+            # st.write(f"You have used a total of {final_df['element'].nunique()} players through the season")
+            # col1, col2 = st.columns(2)
+            # with col1:
+            #     # with st.expander("points breakdown per player"):
+            #     final_df["full_name"] = final_df["first_name"] + " " + final_df["second_name"]
+            #     player_break_down_df = (
+            #         final_df.groupby("full_name")["total_points"]
+            #             .sum()
+            #             .rename("Total Points")
+            #             .rename_axis("Name")
+            #             .astype(int)
+            #             .reset_index()
+            #             .sort_values(by="Total Points", ascending=True)
+            #     )
+            #     fig = go.Figure(go.Bar(
+            #         x=player_break_down_df['Total Points'],
+            #         y=player_break_down_df['Name'],
+            #         orientation='h'
+            #     ))
+            #
+            #     # Set the title and axis labels
+            #     fig.update_layout(
+            #         title='Points breakdown per player',
+            #         xaxis_title='Total Points',
+            #         yaxis_title='Name',
+            #         height=1250,  # Set the height of the chart
+            #         width=650  # Set the width of the chart
+            #     )
+            #     st.plotly_chart(fig)
+            # with col2:
+            #     # with st.expander("points breakdown per postion"):
+            #     pos_df = (
+            #         final_df.groupby("singular_name")["total_points"]
+            #             .sum()
+            #             .rename("Total Points")
+            #             .astype(int)
+            #             .rename_axis("Position")
+            #             .reset_index()
+            #             .sort_values(by="Total Points", ascending=True)
+            #     )
+            #     # pos_df = pos_df.rename_axis('Position')
+            #     fig = go.Figure(go.Bar(
+            #         x=pos_df['Total Points'],
+            #         y=pos_df['Position'],
+            #         orientation='h'
+            #     ))
+            #
+            #     # Set the title and axis labels
+            #     fig.update_layout(
+            #         title='Points breakdown per position',
+            #         xaxis_title='Total Points',
+            #         yaxis_title='Position'
+            #     )
+            #     st.plotly_chart(fig)
+            #     # st.table(pos_df)
+            #
+            # st.subheader("Performance of captain picks")
+            # st.plotly_chart(plot_captain_points(final_df))
+
+    else:
+        st.write("enter the id of the team you want to anlayze")

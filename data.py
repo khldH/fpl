@@ -75,30 +75,31 @@ def get_all_players_per_gw_data():
 
             if response.status_code == 200:
                 player_data = response.json()
-                history_data = player_data["history"]
+                if player_data["history"]:
+                    history_data = player_data["history"]
 
-                # Create a DataFrame from the history data
-                df = pd.DataFrame(history_data)
+                    # Create a DataFrame from the history data
+                    df = pd.DataFrame(history_data)
 
-                # Merge the history DataFrame with the elements DataFrame based on 'element' ID
-                df = df.merge(
-                    element_df[["id", "first_name", "second_name", "element_type", "team_code"]],
-                    left_on="element",
-                    right_on="id",
-                )
+                    # Merge the history DataFrame with the elements DataFrame based on 'element' ID
+                    df = df.merge(
+                        element_df[["id", "first_name", "second_name", "web_name", "element_type", "team_code"]],
+                        left_on="element",
+                        right_on="id",
+                    )
 
-                # Merge the history DataFrame with the element_types DataFrame based on 'element_type' ID
-                df = df.merge(element_types_df[["id", "singular_name"]], left_on="element_type", right_on="id")
+                    # Merge the history DataFrame with the element_types DataFrame based on 'element_type' ID
+                    df = df.merge(element_types_df[["id", "singular_name"]], left_on="element_type", right_on="id")
 
-                # Merge the history DataFrame with the teams DataFrame based on 'team' ID
-                df = df.merge(teams_df[["code", "name"]], left_on="team_code", right_on="code")
+                    # Merge the history DataFrame with the teams DataFrame based on 'team' ID
+                    df = df.merge(teams_df[["code", "name"]], left_on="team_code", right_on="code")
 
-                all_data_dfs.append(df)
+                    all_data_dfs.append(df)
 
         # Concatenate all player DataFrames into a single DataFrame
         players_df = pd.concat(all_data_dfs, ignore_index=True)
 
-        players_df.to_csv("FPLDATA/all_payer_per_gw_data.csv")
+        # players_df.to_csv("FPLDATA/all_payer_per_gw_data.csv")
 
         return players_df
 
@@ -260,7 +261,7 @@ def prepare_player_data():
             avg_fixture_difficulties.append(avg_fixture_difficulty)
 
         # Add the average fixture difficulties to the merged_df dataframe
-        merged_df["avg_fixture_difficulty_first_5_gwks"] = avg_fixture_difficulties
+        merged_df["avg_fixture_difficulty_next_5_gwks"] = avg_fixture_difficulties
 
         # Convert necessary columns to numeric data types and fill NaN values with zeros
         numeric_columns = [
@@ -273,7 +274,7 @@ def prepare_player_data():
             "ict_index",
             "creativity",
             "clean_sheets",
-            "avg_fixture_difficulty_first_5_gwks",
+            "avg_fixture_difficulty_next_5_gwks",
             "selected_by_percent",
         ]
         merged_df[numeric_columns] = merged_df[numeric_columns].apply(pd.to_numeric, errors="coerce").fillna(0)

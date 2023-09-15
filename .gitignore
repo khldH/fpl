@@ -99,4 +99,6 @@ target/
 .mypy_cache/
 venv/
 squad_selection/__init__.py/
+#squad_selection/__pycache__/optimiztion.cpython-39.pyc
 squad_selection/__pycache__/optimiztion.cpython-39.pyc
+

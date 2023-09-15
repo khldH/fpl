@@ -4,40 +4,40 @@ from pulp import LpMaximize, LpProblem, LpVariable, lpSum, value
 def calculate_player_rating(row):
     if row["singular_name"] == "Forward":
         return (
-                (row["total_points"])
-                + (2.0 * row["starts"])
-                + (1.5 * row["bonus"])
-                + (1.2 * row["bps"])
-                + (0.9 * row["influence"])
-                + (0.7 * row["threat"])
-                - (7.5 * row["avg_fixture_difficulty_first_5_gwks"])
+            (row["total_points"])
+            + (2.0 * row["starts"])
+            + (1.5 * row["bonus"])
+            + (1.2 * row["bps"])
+            + (0.9 * row["influence"])
+            + (0.7 * row["threat"])
+            - (7.5 * row["avg_fixture_difficulty_next_5_gwks"])
         )
     elif row["singular_name"] == "Midfielder":
         return (
-                (row["total_points"])
-                + (2.0 * row["starts"])
-                + (1.5 * row["bonus"])
-                + (1.2 * row["bps"])
-                + (0.9 * row["influence"])
-                + -(7.5 * row["avg_fixture_difficulty_first_5_gwks"])
+            (row["total_points"])
+            + (2.0 * row["starts"])
+            + (1.5 * row["bonus"])
+            + (1.2 * row["bps"])
+            + (0.9 * row["influence"])
+            + -(7.5 * row["avg_fixture_difficulty_next_5_gwks"])
         )
     elif row["singular_name"] == "Defender":
         return (
-                (row["total_points"])
-                + (2.0 * row["starts"])
-                + (1.5 * row["bonus"])
-                + (1.2 * row["bps"])
-                + (0.7 * row["clean_sheets"])
-                - (7.5 * row["avg_fixture_difficulty_first_5_gwks"])
+            (row["total_points"])
+            + (2.0 * row["starts"])
+            + (1.5 * row["bonus"])
+            + (1.2 * row["bps"])
+            + (0.7 * row["clean_sheets"])
+            - (7.5 * row["avg_fixture_difficulty_next_5_gwks"])
         )
     elif row["singular_name"] == "Goalkeeper":
         return (
-                (row["total_points"])
-                + (2.0 * row["starts"])
-                + (1.5 * row["bonus"])
-                + (1.2 * row["bps"])
-                + (1.5 * row["clean_sheets"])
-                - (7.5 * row["avg_fixture_difficulty_first_5_gwks"])
+            (row["total_points"])
+            + (2.0 * row["starts"])
+            + (1.5 * row["bonus"])
+            + (1.2 * row["bps"])
+            + (1.5 * row["clean_sheets"])
+            - (7.5 * row["avg_fixture_difficulty_next_5_gwks"])
         )
     else:
         return 0
@@ -45,8 +45,8 @@ def calculate_player_rating(row):
 
 def squad_selection_forwards(df, total_cost, include_players=None, exclude_players=None):
     df = df[df["singular_name"] == "Forward"]
-    if total_cost < (df['start_cost'].min() * 3):
-        total_cost = (df['start_cost'].min() * 3)
+    if total_cost < (df["start_cost"].min() * 3):
+        total_cost = df["start_cost"].min() * 3
         include_players = None
 
     # Create the linear programming problem
@@ -67,8 +67,8 @@ def squad_selection_forwards(df, total_cost, include_players=None, exclude_playe
     # Constraints
     prob += lpSum(selected[player] for player in df["web_name"]) == 3
     prob += (
-            lpSum(selected[player] * df.loc[df.index[i], "start_cost"] for i, player in enumerate(df["web_name"]))
-            <= total_cost
+        lpSum(selected[player] * df.loc[df.index[i], "start_cost"] for i, player in enumerate(df["web_name"]))
+        <= total_cost
     )
 
     # Include specified players (if any)
@@ -91,7 +91,7 @@ def squad_selection_forwards(df, total_cost, include_players=None, exclude_playe
     total_points = value(prob.objective)
     selected_players = [player for player in df["web_name"] if selected[player].value() == 1]
     selected_players_df = df[df["web_name"].isin(selected_players)][
-        ["full_name", "pos", "team_name", "start_cost", "avg_fixture_difficulty_first_5_gwks", "selected_by_percent"]
+        ["full_name", "pos", "team_name", "start_cost", "avg_fixture_difficulty_next_5_gwks", "selected_by_percent"]
     ]
     # selected_players_df.rename(columns={"name":"team"},inplace= True)
     return selected_players_df
@@ -99,8 +99,8 @@ def squad_selection_forwards(df, total_cost, include_players=None, exclude_playe
 
 def squad_selection_midfield(df, total_cost, include_players=None, exclude_players=None):
     df = df[df["singular_name"] == "Midfielder"]
-    if total_cost < (df['start_cost'].min() * 5):
-        total_cost = (df['start_cost'].min() * 5)
+    if total_cost < (df["start_cost"].min() * 5):
+        total_cost = df["start_cost"].min() * 5
         include_players = None
     # Create the linear programming problem
     prob = LpProblem("PlayerSelection", LpMaximize)
@@ -117,8 +117,8 @@ def squad_selection_midfield(df, total_cost, include_players=None, exclude_playe
     # Constraints
     prob += lpSum(selected[player] for player in df["web_name"]) == 5
     prob += (
-            lpSum(selected[player] * df.loc[df.index[i], "start_cost"] for i, player in enumerate(df["web_name"]))
-            <= total_cost
+        lpSum(selected[player] * df.loc[df.index[i], "start_cost"] for i, player in enumerate(df["web_name"]))
+        <= total_cost
     )
 
     # Constraint: No more than 2 players from the same team
@@ -143,7 +143,7 @@ def squad_selection_midfield(df, total_cost, include_players=None, exclude_playe
     total_points = value(prob.objective)
     selected_players = [player for player in df["web_name"] if selected[player].value() == 1]
     selected_players_df = df[df["web_name"].isin(selected_players)][
-        ["full_name", "pos", "team_name", "start_cost", "avg_fixture_difficulty_first_5_gwks", "selected_by_percent"]
+        ["full_name", "pos", "team_name", "start_cost", "avg_fixture_difficulty_next_5_gwks", "selected_by_percent"]
     ]
     # selected_players_df.rename(columns={"name": "team"}, inplace=True)
     return selected_players_df
@@ -151,8 +151,8 @@ def squad_selection_midfield(df, total_cost, include_players=None, exclude_playe
 
 def squad_selection_defence(df, total_cost, include_players=None, exclude_players=None):
     df = df[df["singular_name"] == "Defender"]
-    if total_cost < (df['start_cost'].min() * 5):
-        total_cost = (df['start_cost'].min() * 5)
+    if total_cost < (df["start_cost"].min() * 5):
+        total_cost = df["start_cost"].min() * 5
         include_players = None
     # Create the linear programming problem
     prob = LpProblem("PlayerSelection", LpMaximize)
@@ -169,8 +169,8 @@ def squad_selection_defence(df, total_cost, include_players=None, exclude_player
     # Constraints
     prob += lpSum(selected[player] for player in df["web_name"]) == 5
     prob += (
-            lpSum(selected[player] * df.loc[df.index[i], "start_cost"] for i, player in enumerate(df["web_name"]))
-            <= total_cost
+        lpSum(selected[player] * df.loc[df.index[i], "start_cost"] for i, player in enumerate(df["web_name"]))
+        <= total_cost
     )
 
     # Constraint: No more than 2 players from the same team
@@ -196,7 +196,7 @@ def squad_selection_defence(df, total_cost, include_players=None, exclude_player
     total_points = value(prob.objective)
     selected_players = [player for player in df["web_name"] if selected[player].value() == 1]
     selected_players_df = df[df["web_name"].isin(selected_players)][
-        ["full_name", "pos", "team_name", "start_cost", "avg_fixture_difficulty_first_5_gwks", "selected_by_percent"]
+        ["full_name", "pos", "team_name", "start_cost", "avg_fixture_difficulty_next_5_gwks", "selected_by_percent"]
     ]
     # selected_players_df.rename(columns={"name": "team"}, inplace=True)
     return selected_players_df
@@ -204,8 +204,8 @@ def squad_selection_defence(df, total_cost, include_players=None, exclude_player
 
 def squad_selection_gk(df, total_cost, include_players=None, exclude_players=None):
     df = df[df["singular_name"] == "Goalkeeper"]
-    if total_cost < (df['start_cost'].min() * 2):
-        total_cost = (df['start_cost'].min() * 2)
+    if total_cost < (df["start_cost"].min() * 2):
+        total_cost = df["start_cost"].min() * 2
         include_players = None
     # df.rename(columns={"name": "team"}, inplace=True)
     # Create the linear programming problem
@@ -223,8 +223,8 @@ def squad_selection_gk(df, total_cost, include_players=None, exclude_players=Non
     # Constraints
     prob += lpSum(selected[player] for player in df["web_name"]) == 2
     prob += (
-            lpSum(selected[player] * df.loc[df.index[i], "start_cost"] for i, player in enumerate(df["web_name"]))
-            <= total_cost
+        lpSum(selected[player] * df.loc[df.index[i], "start_cost"] for i, player in enumerate(df["web_name"]))
+        <= total_cost
     )
 
     # Constraint: No more than 2 players from the same team
@@ -250,7 +250,7 @@ def squad_selection_gk(df, total_cost, include_players=None, exclude_players=Non
     total_points = value(prob.objective)
     selected_players = [player for player in df["web_name"] if selected[player].value() == 1]
     selected_players_df = df[df["web_name"].isin(selected_players)][
-        ["full_name", "pos", "team_name", "start_cost", "avg_fixture_difficulty_first_5_gwks", "selected_by_percent"]
+        ["full_name", "pos", "team_name", "start_cost", "avg_fixture_difficulty_next_5_gwks", "selected_by_percent"]
     ]
     return selected_players_df
 
@@ -284,8 +284,7 @@ def select_squad(df, include_players=None, exclude_players=None):
     # Constraints
     prob += lpSum(selected[player] for player in df["web_name"]) == 15
     prob += (
-            lpSum(
-                selected[player] * df.loc[df.index[i], "start_cost"] for i, player in enumerate(df["web_name"])) <= 100
+        lpSum(selected[player] * df.loc[df.index[i], "start_cost"] for i, player in enumerate(df["web_name"])) <= 100
     )
 
     # Position count constraints
@@ -318,6 +317,6 @@ def select_squad(df, include_players=None, exclude_players=None):
     total_points = value(prob.objective)
     selected_players = [player for player in df["web_name"] if selected[player].value() == 1]
     selected_players_df = df[df["web_name"].isin(selected_players)][
-        ["full_name", "pos", "team_name", "start_cost", "avg_fixture_difficulty_first_5_gwks", "selected_by_percent"]
+        ["full_name", "pos", "team_name", "start_cost", "avg_fixture_difficulty_next_5_gwks", "selected_by_percent"]
     ]
     return status, total_points, selected_players_df

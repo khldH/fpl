@@ -8,6 +8,7 @@ import plotly.graph_objects as go
 import requests
 import streamlit as st
 
+
 # def plot_points_per_event(fpl_history):
 #     df = pd.DataFrame(fpl_history["current"])
 #     # df['points'] = np.where(df['points'] == 0, df['points'].expanding().mean(), df['points'])
@@ -267,5 +268,35 @@ def player_form_guide(df):
         # width=1000,
         # height=600
     )
+
+    return fig
+
+
+def plot_tranfer_perf_per_gw(data):
+    # Separate the data into gameweeks and transfers
+    gameweeks = list(data.keys())
+    transfers = list(data.values())
+
+    # Determine the colors based on the transfer values
+    colors = ['green' if t >= 0 else 'red' for t in transfers]
+
+    # Create a DataFrame for plotting
+    df = pd.DataFrame({'Gameweek': gameweeks, 'points_diff': transfers, 'Color': colors})
+
+    # Create a bar chart using Plotly
+    fig = px.bar(
+        df,
+        x='Gameweek',
+        y='points_diff',
+        text='points_diff',
+        color='Color',
+        color_discrete_map={'green': 'green', 'red': 'red'},
+        # showlegend=False,
+        title='Transfer performance: points difference between players brought in and players sold in the gw',
+    )
+
+    fig.update_xaxes(showline=True, showticklabels=True, dtick=1)
+    fig.update_yaxes(showline=True, showticklabels=True, dtick=1)
+    fig.update_layout(showlegend=False)
 
     return fig
