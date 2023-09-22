@@ -47,8 +47,8 @@ def get_data(url):
 #
 #     return None
 
-
-@st.cache_data
+#
+# @st.cache_data
 def get_all_players_per_gw_data():
     # Get data from the main URL
     main_url = "https://fantasy.premierleague.com/api/bootstrap-static/"
@@ -106,7 +106,7 @@ def get_all_players_per_gw_data():
     return None
 
 
-@st.cache_data
+# @st.cache_data
 def get_all_gw_picks_data_of_a_manager(manager_id):
     base_url = f"https://fantasy.premierleague.com/api/entry/{manager_id}/event/{{}}/picks/"
     game_weeks = range(1, 39)  # GW 1 to 38
@@ -130,7 +130,7 @@ def get_all_gw_picks_data_of_a_manager(manager_id):
     return picks_df
 
 
-@st.cache_data
+# @st.cache_data
 def get_all_players_info():
     url = "https://fantasy.premierleague.com/api/bootstrap-static/"
     response = requests.get(url)
@@ -207,7 +207,7 @@ def merge_data(players_fpl_stats, player_picks_data):
     return final_df
 
 
-@st.cache_data
+# @st.cache_data
 def prepare_player_data():
     main_url = "https://fantasy.premierleague.com/api/bootstrap-static/"
     response = requests.get(main_url)
