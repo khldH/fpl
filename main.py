@@ -149,8 +149,8 @@ if __name__ == "__main__":
         "no data available for them "
     )
     st.write("---")
-
-    fpl_players_data = prepare_player_data()
+    with st.spinner("Getting live data from FPL"):
+        fpl_players_data = prepare_player_data()
     fpl_players_data["rating"] = fpl_players_data.apply(calculate_player_rating, axis=1)
     # fpl_players_data = fpl_players_data[fpl_players_data["chance_of_playing_next_round"].isna()]
     # st.write(fpl_players_data.head(1).T)
@@ -280,23 +280,27 @@ if __name__ == "__main__":
         "Enter your team id:",
         max_chars=20,
         key="input",
+        value=5988275,
         help="Get your team id from the URL when you check your gameweek points on the FPL website.",
     )
     if fpl_manager_id:
+        fpl_manager_id = int(fpl_manager_id)
         url = f"https://fantasy.premierleague.com/api/entry/{fpl_manager_id}/history/"
-
-        fpl_manager_gw_data = get_data(url)
+        with st.spinner(f"Getting live data for this {fpl_manager_id} from the FPL website"):
+            fpl_manager_gw_data = get_data(url)
         # Get all players' data
-        players_fpl_stats = get_all_players_per_gw_data()
+        with st.spinner(f"Getting fpl performance data of players"):
+            players_fpl_stats = get_all_players_per_gw_data()
         # Get gameweek picks data for a specific player
-        player_picks_data = get_all_gw_picks_data_of_a_manager(fpl_manager_id)
+        with st.spinner(f"Getting player picks for {fpl_manager_id} for each gameweek"):
+            player_picks_data = get_all_gw_picks_data_of_a_manager(fpl_manager_id)
 
         final_df = merge_data(players_fpl_stats=players_fpl_stats, player_picks_data=player_picks_data)
         final_df = aggregate_total_points_for_dwg(final_df)
 
         if len(fpl_manager_gw_data):
             st.caption("Overview")
-            col1, col2, col3,col4,col5,col6 = st.columns(6)
+            col1, col2, col3, col4, col5, col6 = st.columns(6)
             # with col1:
             # st.subheader("Overview")
 
@@ -307,7 +311,7 @@ if __name__ == "__main__":
             total_transfer_cost = pd.DataFrame(fpl_manager_gw_data["current"])["event_transfers_cost"].sum()
             avg_points_per_gw = np.round(total_points / len(fpl_manager_gw_data["current"]), 2)
 
-            col1.metric(label="Total points", value=total_points,delta_color="off")
+            col1.metric(label="Total points", value=total_points, delta_color="off")
             col2.metric(label="Average points per gw", value=avg_points_per_gw, delta_color="off")
             col3.metric(label="Overall rank %", value=overall_rank, delta_color="off")
             col4.metric(label="Total points on bench", value=total_points_on_bench, delta_color="off")
@@ -321,14 +325,14 @@ if __name__ == "__main__":
             st.write("---")
             st.write("Are your transfers working?")
             st.text("This doesn't take into account the hits you take if you make extra transfers")
-            changes = get_transfers_between_gwks(final_df,players_fpl_stats)
+            changes = get_transfers_between_gwks(final_df, players_fpl_stats)
             diff_points_by_gw = calculate_transfer_points_difference(changes)
-            st.plotly_chart(plot_tranfer_perf_per_gw(diff_points_by_gw),use_container_width=True)
+            st.plotly_chart(plot_tranfer_perf_per_gw(diff_points_by_gw), use_container_width=True)
 
             st.write(changes)
             # st.write(diff_points_by_gw)
             # st.empty()
-                # st.plotly_chart(plot_season_points(fpl_history=fpl_manager_gw_data))
+            # st.plotly_chart(plot_season_points(fpl_history=fpl_manager_gw_data))
             st.write("---")
             st.subheader("Make better transfers")
             col1, col2 = st.columns(2)
