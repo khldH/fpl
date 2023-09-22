@@ -295,9 +295,11 @@ if __name__ == "__main__":
         final_df = aggregate_total_points_for_dwg(final_df)
 
         if len(fpl_manager_gw_data):
-            col1, col2 = st.columns(2)
+            st.caption("Overview")
+            col1, col2, col3,col4,col5,col6 = st.columns(6)
             # with col1:
-            st.subheader("Overview")
+            # st.subheader("Overview")
+
             total_points = fpl_manager_gw_data["current"][-1]["total_points"]
             overall_rank = np.round((fpl_manager_gw_data["current"][-1]["overall_rank"] / 9822586) * 100, 2)
             total_transfers = pd.DataFrame(fpl_manager_gw_data["current"])["event_transfers"].sum()
@@ -305,31 +307,23 @@ if __name__ == "__main__":
             total_transfer_cost = pd.DataFrame(fpl_manager_gw_data["current"])["event_transfers_cost"].sum()
             avg_points_per_gw = np.round(total_points / len(fpl_manager_gw_data["current"]), 2)
 
-            card_container = ""
-            card_container += create_card(total_points, "Total points")
-            card_container += create_card(avg_points_per_gw, "Average points per gw")
-            card_container += create_card(overall_rank, "Overall rank %")
-            card_container += create_card(
-                total_points_on_bench, "Total points on bench", background_color="yellow", text_color="black"
-            )
-            card_container += create_card(total_transfers, "Total transfers")
-            card_container += create_card(total_transfer_cost, "Total transfers cost", background_color="red")
+            col1.metric(label="Total points", value=total_points,delta_color="off")
+            col2.metric(label="Average points per gw", value=avg_points_per_gw, delta_color="off")
+            col3.metric(label="Overall rank %", value=overall_rank, delta_color="off")
+            col4.metric(label="Total points on bench", value=total_points_on_bench, delta_color="off")
+            col5.metric(label="Total transfers", value=total_transfers, delta_color="off")
+            col6.metric(label="Total transfers cost", value=total_transfer_cost, delta_color="off")
+            st.write("---")
+            st.plotly_chart(plot_points_per_event(fpl_history=fpl_manager_gw_data), use_container_width=True)
+            st.write("___")
+            st.plotly_chart(plot_captain_points(final_df), use_container_width=True)
 
-            st.markdown(
-                f"""
-                <div class="card-container">
-                    {card_container}
-
-                """,
-                unsafe_allow_html=True,
-            )
-            # with col2:
             st.write("---")
             st.write("Are your transfers working?")
             st.text("This doesn't take into account the hits you take if you make extra transfers")
-            changes = get_transfers_between_gwks(final_df)
+            changes = get_transfers_between_gwks(final_df,players_fpl_stats)
             diff_points_by_gw = calculate_transfer_points_difference(changes)
-            st.plotly_chart(plot_tranfer_perf_per_gw(diff_points_by_gw))
+            st.plotly_chart(plot_tranfer_perf_per_gw(diff_points_by_gw),use_container_width=True)
 
             st.write(changes)
             # st.write(diff_points_by_gw)
@@ -356,7 +350,7 @@ if __name__ == "__main__":
                 st.dataframe(transfer_in_suggested)
 
             # with col1:
-            # st.plotly_chart(plot_points_per_event(fpl_history=fpl_manager_gw_data))
+
             # # with col2:
             # st.plotly_chart(plot_cumulative_points(fpl_history=fpl_manager_gw_data))
             # st.write("---")
@@ -418,7 +412,7 @@ if __name__ == "__main__":
             #     # st.table(pos_df)
             #
             # st.subheader("Performance of captain picks")
-            # st.plotly_chart(plot_captain_points(final_df))
+
 
     else:
         st.write("enter the id of the team you want to anlayze")

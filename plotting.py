@@ -57,11 +57,13 @@ import streamlit as st
 
 def plot_points_per_event(fpl_history):
     df = pd.DataFrame(fpl_history["current"])
+
     events_url = "https://fantasy.premierleague.com/api/bootstrap-static/"
     events_data = requests.get(events_url).json()
     events_df = pd.DataFrame(events_data["events"])
+    events_df = events_df[events_df['id'] <= df['event'].nunique()]
     chips_df = pd.DataFrame(fpl_history["chips"])
-
+    # st.write(events_df['id'].nunique())
     # Create a line plot for points per gameweek
     line_trace = go.Scatter(x=df["event"], y=df["points"], mode="lines", name="Manager's points per Gameweek")
 
@@ -92,7 +94,7 @@ def plot_points_per_event(fpl_history):
         )
         chip_traces.append(chip_trace)
 
-    data = [line_trace, avg_score_trace, highest_score_trace] + chip_traces
+    data = [line_trace, highest_score_trace, avg_score_trace] + chip_traces
     # data = [line_trace] + chip_traces
 
     # Set layout properties
@@ -101,8 +103,8 @@ def plot_points_per_event(fpl_history):
         xaxis=dict(title="Gameweek", tickmode="linear", dtick=1),
         yaxis=dict(title="Points"),
         showlegend=True,
-        width=1000,  # Increase figure width
-        height=600,  # Increase figure height
+        # width=1000,  # Increase figure width
+        # height=600,  # Increase figure height
     )
 
     # Create the figure and display it
@@ -217,20 +219,22 @@ def plot_captain_points(df):
     )
 
     # Find the event with multiplier 3
-    event_with_multiplier_3 = captain_df[captain_df["multiplier"] == 3]["event"].values[0]
+    triple_captain_df = captain_df[captain_df["multiplier"] == 3]
+    if len(triple_captain_df) > 0:
+        event_with_multiplier_3 = captain_df[captain_df["multiplier"] == 3]["event"].values[0]
 
     # Add an annotation for the event with multiplier 3
-    annotation = go.layout.Annotation(
-        x=event_with_multiplier_3,
-        y=captain_df.loc[captain_df["event"] == event_with_multiplier_3, "total_points"].values[0],
-        text="3xC",
-        showarrow=False,
-        arrowhead=7,
-        ax=0,
-        ay=-40,
-    )
+        annotation = go.layout.Annotation(
+            x=event_with_multiplier_3,
+            y=captain_df.loc[captain_df["event"] == event_with_multiplier_3, "total_points"].values[0],
+            text="3xC",
+            showarrow=False,
+            arrowhead=7,
+            ax=0,
+            ay=-40,
+        )
 
-    layout.annotations = [annotation]
+        layout.annotations = [annotation]
 
     # Create the figure
     fig = go.Figure(data=[scatter_trace], layout=layout)

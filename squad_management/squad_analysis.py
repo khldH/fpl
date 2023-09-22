@@ -3,32 +3,32 @@ from pulp import LpMaximize, LpProblem, LpVariable, lpSum
 import streamlit as st
 
 
-def get_transfers_between_gwks(df):
+def get_transfers_between_gwks(gw_picks_df, player_perf_df):
     changes = []
     events = []
-    unique_events = df["event"].unique()
+    unique_events = gw_picks_df["event"].unique()
     unique_events.sort()
 
     for i in range(len(unique_events) - 1):
         event1 = unique_events[i]
         event2 = unique_events[i + 1]
 
-        event1_elements = set(df[df["event"] == event1]["element"])
-        event2_elements = set(df[df["event"] == event2]["element"])
+        event1_elements = set(gw_picks_df[gw_picks_df["event"] == event1]["element"])
+        event2_elements = set(gw_picks_df[gw_picks_df["event"] == event2]["element"])
 
         elements_added = event2_elements - event1_elements
         elements_removed = event1_elements - event2_elements
 
         added_elements = []
         for element in elements_added:
-            total_points = df[(df["event"] == event2) & (df["element"] == element)]["total_points"].sum()
-            second_name = df[(df["event"] == event2) & (df["element"] == element)]["web_name"].values[0]
+            total_points = player_perf_df[(player_perf_df["round"] == event2) & (player_perf_df["element"] == element)]["total_points"].sum()
+            second_name = player_perf_df[(player_perf_df["round"] == event2) & (player_perf_df["element"] == element)]["web_name"].values[0]
             added_elements.append({"element": element, "total_points": total_points, "web_name": second_name})
 
         removed_elements = []
         for element in elements_removed:
-            total_points = df[(df["event"] == event1) & (df["element"] == element)]["total_points"].sum()
-            second_name = df[(df["event"] == event1) & (df["element"] == element)]["web_name"].values[0]
+            total_points = player_perf_df[(player_perf_df["round"] == event2) & (player_perf_df["element"] == element)]["total_points"].sum()
+            second_name = player_perf_df[(player_perf_df["element"] == element)]["web_name"].values[0]
             removed_elements.append({"element": element, "total_points": total_points, "web_name": second_name})
 
         change = {
