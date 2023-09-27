@@ -4,7 +4,6 @@ import pandas as pd
 import requests
 import streamlit as st
 
-
 def get_data(url):
     response = requests.get(url)
     if response.status_code == 200:
@@ -48,9 +47,10 @@ def get_data(url):
 #     return None
 
 #
-# @st.cache_data
-def get_all_players_per_gw_data():
+@st.cache_data
+def get_all_players_per_gw_data(date):
     # Get data from the main URL
+    date = date
     main_url = "https://fantasy.premierleague.com/api/bootstrap-static/"
     response = requests.get(main_url)
 
@@ -106,8 +106,9 @@ def get_all_players_per_gw_data():
     return None
 
 
-# @st.cache_data
-def get_all_gw_picks_data_of_a_manager(manager_id):
+@st.cache_data
+def get_all_gw_picks_data_of_a_manager(manager_id, date):
+    date = date
     base_url = f"https://fantasy.premierleague.com/api/entry/{manager_id}/event/{{}}/picks/"
     game_weeks = range(1, 39)  # GW 1 to 38
     all_data_dfs = []  # List to store DataFrames for each GW
@@ -130,8 +131,9 @@ def get_all_gw_picks_data_of_a_manager(manager_id):
     return picks_df
 
 
-# @st.cache_data
-def get_all_players_info():
+@st.cache_data
+def get_all_players_info(date):
+    date = date
     url = "https://fantasy.premierleague.com/api/bootstrap-static/"
     response = requests.get(url)
     if response.status_code == 200:
@@ -207,8 +209,9 @@ def merge_data(players_fpl_stats, player_picks_data):
     return final_df
 
 
-# @st.cache_data
-def prepare_player_data():
+@st.cache_data
+def prepare_player_data(date):
+    date = date
     main_url = "https://fantasy.premierleague.com/api/bootstrap-static/"
     response = requests.get(main_url)
     # Extract the dataframes from the data_dict

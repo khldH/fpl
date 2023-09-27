@@ -1,4 +1,5 @@
 import time
+import datetime
 
 import numpy as np
 import pandas as pd
@@ -82,6 +83,7 @@ def long_running_process():
 
 
 if __name__ == "__main__":
+    today = datetime.datetime.today().day
     # st.sidebar.title("Sidebar")
     # st.sidebar.subheader("FPL")
     # Add sidebar inputs option = st.sidebar.radio("Select an option", ["Overview", "Your team vs current champion",
@@ -150,7 +152,7 @@ if __name__ == "__main__":
     )
     st.write("---")
     with st.spinner("Getting live data from FPL"):
-        fpl_players_data = prepare_player_data()
+        fpl_players_data = prepare_player_data(date=today)
     fpl_players_data["rating"] = fpl_players_data.apply(calculate_player_rating, axis=1)
     # fpl_players_data = fpl_players_data[fpl_players_data["chance_of_playing_next_round"].isna()]
     # st.write(fpl_players_data.head(1).T)
@@ -290,10 +292,10 @@ if __name__ == "__main__":
             fpl_manager_gw_data = get_data(url)
         # Get all players' data
         with st.spinner(f"Getting fpl performance data of players"):
-            players_fpl_stats = get_all_players_per_gw_data()
+            players_fpl_stats = get_all_players_per_gw_data(date=today)
         # Get gameweek picks data for a specific player
         with st.spinner(f"Getting player picks for {fpl_manager_id} for each gameweek"):
-            player_picks_data = get_all_gw_picks_data_of_a_manager(fpl_manager_id)
+            player_picks_data = get_all_gw_picks_data_of_a_manager(fpl_manager_id,date=today)
 
         final_df = merge_data(players_fpl_stats=players_fpl_stats, player_picks_data=player_picks_data)
         final_df = aggregate_total_points_for_dwg(final_df)
@@ -337,11 +339,11 @@ if __name__ == "__main__":
             st.subheader("Make better transfers")
             col1, col2 = st.columns(2)
             with col1:
-                st.write("Get up to 5 players with similar performance but cheaper than a reference player")
+                st.write("Get up to 5 players with better performance but cheaper than a reference player")
                 reference_player = st.text_input("Player name as it appears in your fantasy app/web", value='Salah')
                 similar = get_similar_players(df=fpl_players_data, reference_player=reference_player)
                 st.write("---")
-                st.write(f"Players with similar performance as ***{reference_player}*** but cheaper")
+                st.write(f"Players with better performance as ***{reference_player}*** but cheaper")
                 st.dataframe(similar)
             with col2:
                 st.write("Get suggestions for a transfer")
